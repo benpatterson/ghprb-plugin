@@ -53,7 +53,12 @@ public class GhprbCause extends Cause{
 	}
 	
 	public boolean isMerged() {
-		return merged;
+        // hardcode hack: never automatically merge a commit for a pull request build.
+        // see various bugs that are affected by this. Header descriptions for edx are in
+        // https://openedx.atlassian.net/browse/TE-703
+
+        //return merged;
+        return false;
 	}
 
 	public int getPullID(){
