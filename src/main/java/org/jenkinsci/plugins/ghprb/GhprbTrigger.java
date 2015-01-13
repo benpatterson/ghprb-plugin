@@ -50,6 +50,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private final String triggerPhrase;
     private final Boolean onlyTriggerPhrase;
     private final Boolean useGitHubHooks;
+    private final Boolean doNotUseMergeCommit;
     private final Boolean permitAll;
     private final String commentFilePath;
     private String whitelist;
@@ -69,6 +70,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         String triggerPhrase,
                         Boolean onlyTriggerPhrase,
                         Boolean useGitHubHooks,
+                        Boolean doNotUseMergeCommit,
                         Boolean permitAll,
                         Boolean autoCloseFailedPullRequests,
                         Boolean displayBuildErrorsOnDownstreamBuilds,
@@ -85,6 +87,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.triggerPhrase = triggerPhrase;
         this.onlyTriggerPhrase = onlyTriggerPhrase;
         this.useGitHubHooks = useGitHubHooks;
+        this.doNotUseMergeCommit = doNotUseMergeCommit;
         this.permitAll = permitAll;
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.displayBuildErrorsOnDownstreamBuilds = displayBuildErrorsOnDownstreamBuilds;
@@ -152,9 +155,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
     public QueueTaskFuture<?> startJob(GhprbCause cause, GhprbRepository repo) {
         ArrayList<ParameterValue> values = getDefaultParameters();
-        // Note that the below line is hardcoded to always execute one path from the or statement.
-        // @link GhprbCause.isMerged
-        final String commitSha = cause.isMerged() ? "origin/pr/" + cause.getPullID() + "/merge" : cause.getCommit();
+        final String commitSha = useMergeCommit(cause) ? "origin/pr/" + cause.getPullID() + "/merge" : cause.getCommit();
         values.add(new StringParameterValue("sha1", commitSha));
         values.add(new StringParameterValue("ghprbActualCommit", cause.getCommit()));
         String triggerAuthor = "";
@@ -297,6 +298,20 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
     public Boolean getUseGitHubHooks() {
         return useGitHubHooks != null && useGitHubHooks;
+    }
+
+    public Boolean getDoNotUseMergeCommit() {
+        return doNotUseMergeCommit != null && doNotUseMergeCommit;
+    }
+
+    public Boolean useMergeCommit(GhprbCause cause) {
+        if (getDoNotUseMergeCommit()) {
+            logger.log(Level.SEVERE, "Not going to try a merge.");
+            return false;
+        }
+        else {
+            return cause.isMerged();
+        }
     }
 
     public Boolean getPermitAll() {
