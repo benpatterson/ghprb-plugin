@@ -58,6 +58,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private List<GhprbBranch> whiteListTargetBranches;
     private String msgSuccess;
     private String msgFailure;
+    private final Boolean skipMergeCommit;
     private transient Ghprb helper;
     private String project;
 
@@ -76,7 +77,8 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         List<GhprbBranch> whiteListTargetBranches,
                         Boolean allowMembersOfWhitelistedOrgsAsAdmin,
                         String msgSuccess,
-                        String msgFailure) throws ANTLRException {
+                        String msgFailure,
+                        Boolean skipMergeCommit) throws ANTLRException {
         super(cron);
         this.adminlist = adminlist;
         this.whitelist = whitelist;
@@ -93,6 +95,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
         this.msgSuccess = msgSuccess;
         this.msgFailure = msgFailure;
+        this.skipMergeCommit = skipMergeCommit;
     }
 
     public static GhprbTrigger extractTrigger(AbstractProject<?, ?> p) {
@@ -152,8 +155,6 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
     public QueueTaskFuture<?> startJob(GhprbCause cause, GhprbRepository repo) {
         ArrayList<ParameterValue> values = getDefaultParameters();
-        // Note that the below line is hardcoded to always execute one path from the or statement.
-        // @link GhprbCause.isMerged
         final String commitSha = cause.isMerged() ? "origin/pr/" + cause.getPullID() + "/merge" : cause.getCommit();
         values.add(new StringParameterValue("sha1", commitSha));
         values.add(new StringParameterValue("ghprbActualCommit", cause.getCommit()));
@@ -297,6 +298,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
     public Boolean getUseGitHubHooks() {
         return useGitHubHooks != null && useGitHubHooks;
+    }
+
+    public Boolean getSkipMergeCommit() {
+        return skipMergeCommit != null && skipMergeCommit;
     }
 
     public Boolean getPermitAll() {
