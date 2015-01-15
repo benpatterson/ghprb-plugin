@@ -155,7 +155,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
     public QueueTaskFuture<?> startJob(GhprbCause cause, GhprbRepository repo) {
         ArrayList<ParameterValue> values = getDefaultParameters();
-        final String commitSha = cause.isMerged() ? "origin/pr/" + cause.getPullID() + "/merge" : cause.getCommit();
+        final String commitSha = getCommitShaString(cause);
         values.add(new StringParameterValue("sha1", commitSha));
         values.add(new StringParameterValue("ghprbActualCommit", cause.getCommit()));
         String triggerAuthor = "";
@@ -184,7 +184,11 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         // one isn't there
         return this.job.scheduleBuild2(job.getQuietPeriod(), cause, new ParametersAction(values), findPreviousBuildForPullId(pullIdPv), new RevisionParameterAction(commitSha));
     }
-    
+
+    public String getCommitShaString(GhprbCause cause) {
+        return cause.isMerged() ? "origin/pr/" + cause.getPullID() + "/merge" : cause.getCommit();
+    }
+
     private void setCommitAuthor(GhprbCause cause, ArrayList<ParameterValue> values) {
     	String authorName = "";
     	String authorEmail = "";
