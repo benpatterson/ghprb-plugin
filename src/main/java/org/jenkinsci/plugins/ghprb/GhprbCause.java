@@ -23,11 +23,12 @@ public class GhprbCause extends Cause{
     private final GHUser triggerSender;
     private final String commentBody;
     private final GitUser commitAuthor;
+    private final Boolean skipMergeCommit;
 
     public GhprbCause(String commit, int pullID, boolean merged, 
     		String targetBranch, String sourceBranch, String authorEmail, 
     		String title, URL url, GHUser triggerSender, String commentBody,
-    		GitUser commitAuthor){
+    		GitUser commitAuthor, Boolean skipMergeCommit){
     	
 		this.commit = commit;
 		this.pullID = pullID;
@@ -41,6 +42,7 @@ public class GhprbCause extends Cause{
         this.triggerSender = triggerSender;
         this.commentBody = commentBody;
         this.commitAuthor = commitAuthor;
+        this.skipMergeCommit = skipMergeCommit;
 	}
 
 	@Override
@@ -53,12 +55,7 @@ public class GhprbCause extends Cause{
 	}
 	
 	public boolean isMerged() {
-        // hardcode hack: never automatically merge a commit for a pull request build.
-        // see various bugs that are affected by this. Header descriptions for edx are in
-        // https://openedx.atlassian.net/browse/TE-703
-
-        //return merged;
-        return false;
+        return !skipMergeCommit && merged;
 	}
 
 	public int getPullID(){
